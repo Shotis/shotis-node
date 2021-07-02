@@ -1,0 +1,4 @@
+*.o
+shotis-node
+shotis-*.json
+.DS_Store

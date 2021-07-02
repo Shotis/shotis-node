@@ -1,0 +1,16 @@
+{
+    "peers": [
+        "grpc://192.168.0.1:1337"
+    ],
+    "grpc": {
+        "tlsEnabled": false,
+        "tls": {
+            "key": "some_key.key",
+            "cert": "some_cert.cert"
+        }
+    },
+    "storage": {
+        "bucket": "",
+        "key": ""
+    }
+}

@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package shotis;
+
+option go_package = "../network";
+
+service ShotisService {
+    rpc UploadImage(UploadImageMessage) returns (UploadImageResponse){}
+
+    rpc Health(HealthReportRequest) returns (HealthReport);
+}
+
+//HealthReportRequest is a request sent by a client to receive a health report
+message HealthReportRequest {}
+
+//HealthReport reports the current health of the service such as
+// memory usage, awaiting processes, statistics, and anything else I can think of
+message HealthReport {
+    double MemoryUsage = 1;
+    double Allocated = 2;
+    double Free = 3;
+    int32 AwaitingWorkers = 4;
+    int32 IdleWorkers = 5;
+    int32 UploadedImages = 6; 
+    uint64 Uptime = 7;
+}
+
+message UploadImageMessage {
+    string FileName = 1;
+    string MimeType = 2;
+    bytes Data = 3;
+}
+
+message UploadImageResponse {
+    string ImageId = 1;
+    string URL = 2;
+}
