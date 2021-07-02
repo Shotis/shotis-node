@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/rbrick/shotis-node/network"
+	"github.com/shotis/shotis-node/network"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 )

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/rbrick/shotis-node/storage"
+	"github.com/shotis/shotis-node/storage"
 )
 
 type ServerImpl struct {

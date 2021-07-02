@@ -6,8 +6,8 @@ import (
 	"log"
 	"net"
 
-	"github.com/rbrick/shotis-node/network"
-	"github.com/rbrick/shotis-node/storage"
+	"github.com/shotis/shotis-node/network"
+	"github.com/shotis/shotis-node/storage"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 )

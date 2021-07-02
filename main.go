@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "github.com/rbrick/shotis-node/cmd"
+import "github.com/shotis/shotis-node/cmd"
 
 func main() {
 	cmd.Execute()

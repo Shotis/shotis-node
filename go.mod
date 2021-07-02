@@ -1,4 +1,4 @@
-module github.com/rbrick/shotis-node
+module github.com/shotis/shotis-node
 
 go 1.16
 
