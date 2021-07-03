@@ -19,8 +19,6 @@ var httpCmd = &cobra.Command{
 	Short: "Runs an HTTP API server for Shotis",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("http called")
-
 		f, _ := os.Open(args[0])
 
 		conn, err := grpc.Dial(":1337", grpc.WithInsecure())
