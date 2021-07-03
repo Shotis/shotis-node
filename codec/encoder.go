@@ -1,5 +1,6 @@
 // Images, videos, and gifs can really add up in size
-// We'd like to host them all but
+// We'd like to host them all but we also like money and can't go broke
+// hosting uncompressed images.
 package codec
 
 //EncodeHEVC
