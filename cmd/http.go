@@ -1,10 +1,10 @@
 package cmd
 
 import (
-	"context"
+	"bufio"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 
@@ -29,23 +29,42 @@ var httpCmd = &cobra.Command{
 
 		shotisClient := network.NewShotisServiceClient(conn)
 
-		b, _ := ioutil.ReadAll(f)
-
-		report, err := shotisClient.UploadImage(context.Background(), &network.UploadImageMessage{
-			FileName: args[0],
-			MimeType: "whatever",
-			Data:     b,
-		})
+		stream, err := shotisClient.UploadImage(cmd.Context())
 
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		jsreport, _ := json.MarshalIndent(report, "", " ")
+		br := bufio.NewReader(f)
 
-		fmt.Println(string(jsreport))
+		buffer := make([]byte, 512)
 
-		conn.Close()
+		header := &network.FileHeader{
+			FileName: f.Name(),
+			FileType: "whatever",
+		}
+
+		totalRead := 0
+
+		for read, err := br.Read(buffer); read != -1 && err != io.EOF; {
+			stream.Send(&network.UploadImageMessage{
+				Header: header,
+				Data:   buffer[:read],
+			})
+
+			totalRead += read
+			read, err = br.Read(buffer)
+		}
+
+		response, err := stream.CloseAndRecv()
+
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		j, _ := json.MarshalIndent(response, "", " ")
+
+		fmt.Println(string(j))
 	},
 }
 

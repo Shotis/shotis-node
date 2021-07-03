@@ -18,7 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ShotisServiceClient interface {
-	UploadImage(ctx context.Context, in *UploadImageMessage, opts ...grpc.CallOption) (*UploadImageResponse, error)
+	UploadImage(ctx context.Context, opts ...grpc.CallOption) (ShotisService_UploadImageClient, error)
 	Health(ctx context.Context, in *HealthReportRequest, opts ...grpc.CallOption) (*HealthReport, error)
 }
 
@@ -30,13 +30,38 @@ func NewShotisServiceClient(cc grpc.ClientConnInterface) ShotisServiceClient {
 	return &shotisServiceClient{cc}
 }
 
-func (c *shotisServiceClient) UploadImage(ctx context.Context, in *UploadImageMessage, opts ...grpc.CallOption) (*UploadImageResponse, error) {
-	out := new(UploadImageResponse)
-	err := c.cc.Invoke(ctx, "/shotis.ShotisService/UploadImage", in, out, opts...)
+func (c *shotisServiceClient) UploadImage(ctx context.Context, opts ...grpc.CallOption) (ShotisService_UploadImageClient, error) {
+	stream, err := c.cc.NewStream(ctx, &ShotisService_ServiceDesc.Streams[0], "/shotis.ShotisService/UploadImage", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &shotisServiceUploadImageClient{stream}
+	return x, nil
+}
+
+type ShotisService_UploadImageClient interface {
+	Send(*UploadImageMessage) error
+	CloseAndRecv() (*UploadImageResponse, error)
+	grpc.ClientStream
+}
+
+type shotisServiceUploadImageClient struct {
+	grpc.ClientStream
+}
+
+func (x *shotisServiceUploadImageClient) Send(m *UploadImageMessage) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *shotisServiceUploadImageClient) CloseAndRecv() (*UploadImageResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(UploadImageResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func (c *shotisServiceClient) Health(ctx context.Context, in *HealthReportRequest, opts ...grpc.CallOption) (*HealthReport, error) {
@@ -52,7 +77,7 @@ func (c *shotisServiceClient) Health(ctx context.Context, in *HealthReportReques
 // All implementations must embed UnimplementedShotisServiceServer
 // for forward compatibility
 type ShotisServiceServer interface {
-	UploadImage(context.Context, *UploadImageMessage) (*UploadImageResponse, error)
+	UploadImage(ShotisService_UploadImageServer) error
 	Health(context.Context, *HealthReportRequest) (*HealthReport, error)
 	mustEmbedUnimplementedShotisServiceServer()
 }
@@ -61,8 +86,8 @@ type ShotisServiceServer interface {
 type UnimplementedShotisServiceServer struct {
 }
 
-func (UnimplementedShotisServiceServer) UploadImage(context.Context, *UploadImageMessage) (*UploadImageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UploadImage not implemented")
+func (UnimplementedShotisServiceServer) UploadImage(ShotisService_UploadImageServer) error {
+	return status.Errorf(codes.Unimplemented, "method UploadImage not implemented")
 }
 func (UnimplementedShotisServiceServer) Health(context.Context, *HealthReportRequest) (*HealthReport, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Health not implemented")
@@ -80,22 +105,30 @@ func RegisterShotisServiceServer(s grpc.ServiceRegistrar, srv ShotisServiceServe
 	s.RegisterService(&ShotisService_ServiceDesc, srv)
 }
 
-func _ShotisService_UploadImage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UploadImageMessage)
-	if err := dec(in); err != nil {
+func _ShotisService_UploadImage_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ShotisServiceServer).UploadImage(&shotisServiceUploadImageServer{stream})
+}
+
+type ShotisService_UploadImageServer interface {
+	SendAndClose(*UploadImageResponse) error
+	Recv() (*UploadImageMessage, error)
+	grpc.ServerStream
+}
+
+type shotisServiceUploadImageServer struct {
+	grpc.ServerStream
+}
+
+func (x *shotisServiceUploadImageServer) SendAndClose(m *UploadImageResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *shotisServiceUploadImageServer) Recv() (*UploadImageMessage, error) {
+	m := new(UploadImageMessage)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
-	if interceptor == nil {
-		return srv.(ShotisServiceServer).UploadImage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/shotis.ShotisService/UploadImage",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ShotisServiceServer).UploadImage(ctx, req.(*UploadImageMessage))
-	}
-	return interceptor(ctx, in, info, handler)
+	return m, nil
 }
 
 func _ShotisService_Health_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -124,14 +157,16 @@ var ShotisService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ShotisServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "UploadImage",
-			Handler:    _ShotisService_UploadImage_Handler,
-		},
-		{
 			MethodName: "Health",
 			Handler:    _ShotisService_Health_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "UploadImage",
+			Handler:       _ShotisService_UploadImage_Handler,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "proto/shotis.proto",
 }

@@ -5,10 +5,11 @@ package shotis;
 option go_package = "../network";
 
 service ShotisService {
-    rpc UploadImage(UploadImageMessage) returns (UploadImageResponse){}
+    rpc UploadImage(stream UploadImageMessage) returns (UploadImageResponse){}
 
     rpc Health(HealthReportRequest) returns (HealthReport);
 }
+
 
 //HealthReportRequest is a request sent by a client to receive a health report
 message HealthReportRequest {}
@@ -25,13 +26,25 @@ message HealthReport {
     uint64 Uptime = 7;
 }
 
-message UploadImageMessage {
+message FileHeader {
     string FileName = 1;
-    string MimeType = 2;
+    string FileType = 2;
+}
+
+message UploadImageMessage {
+    FileHeader Header = 1;
     bytes Data = 3;
+}
+
+enum Status {
+    Failed = 0;
+    OK = 1;
+    Unknown = 2;
 }
 
 message UploadImageResponse {
     string ImageId = 1;
     string URL = 2;
+    Status Status = 3;
+    string Message = 4;
 }

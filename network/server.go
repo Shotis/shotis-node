@@ -3,7 +3,7 @@ package network
 import (
 	"bytes"
 	context "context"
-	"fmt"
+	"io"
 	"runtime"
 
 	"github.com/shotis/shotis-node/storage"
@@ -31,17 +31,46 @@ func (*ServerImpl) Health(context.Context, *HealthReportRequest) (*HealthReport,
 }
 
 //UploadImage takes in a response from the client, processes it, and uploads it to a GCP cloud storage
-func (s *ServerImpl) UploadImage(ctx context.Context, message *UploadImageMessage) (*UploadImageResponse, error) {
-	fmt.Println("Received Upload Request...")
-	m, err := s.GCPService.Upload(message.FileName, bytes.NewReader(message.Data))
+func (s *ServerImpl) UploadImage(stream ShotisService_UploadImageServer) error {
 
-	if err != nil {
-		return nil, err
+	var header *FileHeader
+	var buf bytes.Buffer
+	for {
+		message, err := stream.Recv()
+
+		if err == io.EOF {
+			break
+		}
+
+		if err != nil {
+			stream.SendAndClose(&UploadImageResponse{
+				Status:  Status_Failed, // the status failed
+				Message: err.Error(),
+			})
+			return err
+		}
+
+		if header == nil {
+			header = message.Header
+		}
+
+		buf.Write(message.Data)
 	}
 
-	fmt.Println("uploaded")
+	cf, err := s.GCPService.Upload(header.FileName, &buf)
 
-	return &UploadImageResponse{
-		URL: m.AccessURL,
-	}, err
+	if err != nil {
+		stream.SendAndClose(&UploadImageResponse{
+			Status:  Status_Failed, // the status failed
+			Message: err.Error(),
+		})
+		return err
+	}
+
+	return stream.SendAndClose(&UploadImageResponse{
+		URL:     cf.AccessURL,
+		ImageId: cf.FileName,
+		Status:  Status_OK,
+		Message: "OK",
+	})
 }
