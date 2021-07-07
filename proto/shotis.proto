@@ -32,8 +32,10 @@ message FileHeader {
 }
 
 message UploadImageMessage {
-    FileHeader Header = 1;
-    bytes Data = 3;
+    oneof msg {
+        FileHeader Header = 1;
+        bytes Data = 3;    
+    }
 }
 
 enum Status {

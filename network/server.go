@@ -32,7 +32,6 @@ func (*ServerImpl) Health(context.Context, *HealthReportRequest) (*HealthReport,
 
 //UploadImage takes in a response from the client, processes it, and uploads it to a GCP cloud storage
 func (s *ServerImpl) UploadImage(stream ShotisService_UploadImageServer) error {
-
 	var header *FileHeader
 	var buf bytes.Buffer
 	for {
@@ -51,10 +50,10 @@ func (s *ServerImpl) UploadImage(stream ShotisService_UploadImageServer) error {
 		}
 
 		if header == nil {
-			header = message.Header
+			header = message.GetHeader()
 		}
 
-		buf.Write(message.Data)
+		buf.Write(message.GetData())
 	}
 
 	cf, err := s.GCPService.Upload(header.FileName, &buf)

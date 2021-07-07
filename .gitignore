@@ -4,3 +4,6 @@ shotis-*.json
 .DS_Store
 *.png
 *.mov
+*.crt
+*.csr
+*.key

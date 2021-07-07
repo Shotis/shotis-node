@@ -1,16 +1,21 @@
 {
-    "peers": [
-        "grpc://192.168.0.1:1337"
-    ],
-    "grpc": {
-        "tlsEnabled": false,
+    "rpc":"",
+    "server": {
         "tls": {
-            "key": "some_key.key",
-            "cert": "some_cert.cert"
-        }
+            "enabled": false,
+            "key": "shotis.key",
+            "cert": "shotis.crt"
+        },
+        "web": {
+            "maxStreams": 250
+        },
+        "rpc":{
+            "host": ":1337"
+        },
+        "host": ":443"
     },
     "storage": {
-        "bucket": "",
-        "key": ""
+        "bucket": "shot_is_image_1",
+        "authKey": "shotis-2ab802400c4e.json"
     }
 }
