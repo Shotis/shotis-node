@@ -2,14 +2,9 @@ package models
 
 import "github.com/google/uuid"
 
-type ImagePath string
+type ContentPath string
 
-// Name will returns the base file name
-func (s ImagePath) Name() {
-
-}
-
-type Image struct {
+type Content struct {
 	// The user who uploaded it.
 	// If the uploader is using a team key
 	Uploader uuid.UUID
@@ -19,7 +14,9 @@ type Image struct {
 	// This should be able to change them
 	Tag string
 	// The location of the image in the bucket
-	Path ImagePath
+	Path ContentPath
+	// The amount of space this image is currently using
+	SpaceUsed float64
 	// If this image is private only the viewer
 	// or team members can view this image
 	Private bool

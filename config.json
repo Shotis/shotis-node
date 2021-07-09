@@ -1,21 +1,29 @@
 {
     "rpc":"",
-    "server": {
-        "tls": {
-            "enabled": false,
-            "key": "shotis.key",
-            "cert": "shotis.crt"
-        },
-        "web": {
-            "maxStreams": 250
-        },
-        "rpc":{
-            "host": ":1337"
-        },
-        "host": ":443"
+    "server":{
+       "tls":{
+          "enabled":false,
+          "key":"shotis.key",
+          "cert":"shotis.crt"
+       },
+       "web":{
+          "maxStreams":250
+       },
+       "rpc":{
+          "host":":1337"
+       },
+       "host":":8080"
     },
-    "storage": {
-        "bucket": "shot_is_image_1",
-        "authKey": "shotis-2ab802400c4e.json"
+    "cloud":{
+       "project":"shotis",
+       "storage":{
+          "bucket":"shot_is_image_1",
+          "authKey":"shotis-2ab802400c4e.json"
+       },
+       "database":{
+        "userCollection":"users",
+        "fileCollection":"files",
+        "linksCollection":"links"
+       }
     }
-}
+ }

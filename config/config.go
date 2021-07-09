@@ -8,7 +8,7 @@ import (
 type NodeConfig struct {
 	Server *ServerConfig `json:"server"`
 	// The storage
-	Storage *StorageConfig `json:"storage"`
+	Cloud *CloudConfig `json:"cloud"`
 }
 
 type RPCConfig struct {
@@ -32,6 +32,11 @@ type ServerConfig struct {
 type StorageConfig struct {
 	Bucket  string `json:"bucket"`
 	AuthKey string `json:"authKey"`
+}
+
+type CloudConfig struct {
+	Project string         `json:"project"`
+	Storage *StorageConfig `json:"storage"`
 }
 
 type WebConfig struct {

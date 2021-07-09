@@ -3,13 +3,16 @@ package worker
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"io"
-	"runtime"
+	"net"
 
 	"github.com/shotis/shotis-node/config"
 	"github.com/shotis/shotis-node/network"
 	"github.com/shotis/shotis-node/storage"
 	"github.com/shotis/shotis-node/tasks"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 //GRPCWorker is an implementation of the gRPC server
@@ -21,18 +24,8 @@ type GRPCWorker struct {
 }
 
 func (*GRPCWorker) Health(context.Context, *network.HealthReportRequest) (*network.HealthReport, error) {
-	var stats runtime.MemStats
-
-	runtime.ReadMemStats(&stats)
-
-	return &network.HealthReport{
-		MemoryUsage:     float64(stats.Alloc),
-		Free:            float64(stats.Sys - stats.Alloc),
-		Allocated:       float64(stats.TotalAlloc),
-		AwaitingWorkers: 0,
-		IdleWorkers:     0,
-		UploadedImages:  1337,
-	}, nil
+	// TODO
+	return nil, nil
 }
 
 //UploadImage takes in a response from the client, processes it, and uploads it to a GCP cloud storage
@@ -80,8 +73,47 @@ func (s *GRPCWorker) UploadImage(stream network.ShotisService_UploadImageServer)
 	})
 }
 
-func (worker *GRPCWorker) Start() {}
+//StartTLS starts a GRPC server
+func (worker *GRPCWorker) StartTLS(host, cert, key string) error {
+	tlsCert, err := tls.LoadX509KeyPair(cert, key)
 
-func NewGRPCWorker(ctx context.Context, config *config.NodeConfig) *GRPCWorker {
+	if err != nil {
+		return err
+	}
 
+	server := grpc.NewServer(grpc.Creds(credentials.NewServerTLSFromCert(&tlsCert)))
+	network.RegisterShotisServiceServer(server, worker)
+
+	l, err := net.Listen("tcp", host)
+
+	if err != nil {
+		return err
+	}
+
+	return server.Serve(l)
+}
+
+func (worker *GRPCWorker) Start(host string) error {
+	server := grpc.NewServer()
+	network.RegisterShotisServiceServer(server, worker)
+
+	l, err := net.Listen("tcp", host)
+
+	if err != nil {
+		return err
+	}
+	return server.Serve(l)
+}
+
+func NewGRPCWorker(ctx context.Context, config *config.NodeConfig) (*GRPCWorker, error) {
+	service, err := storage.NewGoogleCloudStorage(ctx, config.Cloud.Storage.AuthKey, storage.Bucket(config.Cloud.Storage.Bucket))
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &GRPCWorker{
+		ctx:            ctx,
+		storageService: service,
+	}, nil
 }

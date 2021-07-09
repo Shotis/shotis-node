@@ -25,20 +25,14 @@ type WebServer struct {
 }
 
 func addRoutes(router *echo.Router) {
-	router.Add("GET", "/api/status/network", func(c echo.Context) error {
-		return nil
-	})
 
-	router.Add("POST", "/api/upload", func(c echo.Context) error {
-		// file := c.FormFile("content")
-
-		return nil
-	})
 }
 
 func (ws *WebServer) Start(ctx context.Context) error {
-
-	return ws.e.StartTLS(ws.conf.Server.Host, ws.conf.Server.TLS.CertPath, ws.conf.Server.TLS.KeyPath)
+	if ws.conf.Server.TLS.Enabled {
+		return ws.e.StartTLS(ws.conf.Server.Host, ws.conf.Server.TLS.CertPath, ws.conf.Server.TLS.KeyPath)
+	}
+	return ws.e.Start(ws.conf.Server.Host)
 }
 
 func Init(c *config.NodeConfig) (*WebServer, error) {

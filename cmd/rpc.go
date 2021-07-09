@@ -2,22 +2,12 @@ package cmd
 
 import (
 	"context"
-	"crypto/tls"
 	"log"
-	"net"
+	"sync"
 
-	"github.com/shotis/shotis-node/network"
-	"github.com/shotis/shotis-node/storage"
-	"github.com/shotis/shotis-node/tasks"
+	"github.com/shotis/shotis-node/worker"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
-
-type GRPCWorker struct {
-	Backing       *network.ServerImpl
-	AwaitingTasks *tasks.Queue
-}
 
 // rpcCmd represents the rpc command
 var rpcCmd = &cobra.Command{
@@ -25,40 +15,28 @@ var rpcCmd = &cobra.Command{
 	Short: "Runs an gRPC server on the Shotis network",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-
-		log.Println("starting gRPC server on", Config.Server.RPC.Host)
-
-		cert, err := tls.LoadX509KeyPair(Config.Server.TLS.CertPath, Config.Server.TLS.KeyPath)
+		log.Println("starting gRPC worker on", Config.Server.RPC.Host)
+		worker, err := worker.NewGRPCWorker(context.Background(), Config)
 
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		server := grpc.NewServer(grpc.Creds(credentials.NewServerTLSFromCert(&cert)))
-		service, err := storage.NewGoogleCloudStorage(context.Background(), Config.Storage.AuthKey, storage.Bucket(Config.Storage.Bucket))
+		var wg sync.WaitGroup
 
-		if err != nil {
-			log.Println(err)
-		} else {
-			log.Println("created Google Cloud Storage server")
-		}
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if Config.Server.TLS.Enabled {
+				worker.StartTLS(Config.Server.RPC.Host, Config.Server.TLS.CertPath, Config.Server.TLS.KeyPath)
+			} else {
+				worker.Start(Config.Server.Host)
+			}
+		}()
 
-		worker := &GRPCWorker{
-			Backing: &network.ServerImpl{
-				GCPService: service,
-			},
-			AwaitingTasks: tasks.NewQueue(100),
-		}
+		log.Println("successfully started gRPC worker.")
+		wg.Wait()
 
-		network.RegisterShotisServiceServer(server, worker.Backing)
-
-		l, err := net.Listen("tcp", Config.Server.RPC.Host)
-
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		server.Serve(l)
 	},
 }
 
